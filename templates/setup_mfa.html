@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="screen active">
+  <div class="card">
+
+    <a href="{{ url_for('security') }}" class="back-btn">← Back</a>
+    <p class="pg-title">Set Up Authenticator</p>
+    <p class="pg-sub">// works with Google Authenticator, Authy, and any TOTP app</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert {{ 's' if category == 'success' else 'e' }} show">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Step 1: Scan QR code -->
+    <p class="sec-title">Step 1 — Scan this QR code</p>
+    <div style="text-align:center;background:#fff;border-radius:var(--rsm);
+                padding:14px;margin-bottom:14px">
+      <img src="data:image/png;base64,{{ qr_b64 }}"
+           alt="TOTP QR Code"
+           style="width:180px;height:180px;display:block;margin:0 auto"/>
+    </div>
+
+    <!-- Manual entry fallback -->
+    <p class="sec-title">Can't scan? Enter this key manually</p>
+    <div style="background:var(--surface);border:1px dashed var(--border2);
+                border-radius:var(--rsm);padding:10px 14px;margin-bottom:20px;
+                font-family:'JetBrains Mono',monospace;font-size:.85rem;
+                letter-spacing:.12em;color:var(--accent2);word-break:break-all;
+                text-align:center">
+      {{ secret }}
+    </div>
+
+    <!-- Step 2: Confirm the first code -->
+    <p class="sec-title">Step 2 — Enter the 6-digit code to confirm</p>
+    <form method="POST" action="{{ url_for('setup_mfa') }}" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="field">
+        <label>Authenticator Code</label>
+        <input type="text" name="code" id="code"
+               placeholder="000000"
+               inputmode="numeric"
+               autocomplete="one-time-code"
+               maxlength="6"
+               autofocus
+               style="font-size:1.4rem;letter-spacing:.35em;text-align:center;padding:14px"/>
+        {% if form.code.errors %}
+          <div class="field-err show">{{ form.code.errors[0] }}</div>
+        {% endif %}
+      </div>
+      <button class="btn-p" type="submit">Enable MFA →</button>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

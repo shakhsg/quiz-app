@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/></head>
+<body style="font-family:Arial,sans-serif;background:#07080f;color:#e2e8f0;
+             padding:40px 20px;text-align:center;margin:0">
+
+  <div style="max-width:480px;margin:0 auto;background:#131829;
+              border:1px solid #232d4a;border-radius:16px;padding:40px 36px">
+
+    <div style="font-size:2.4rem;margin-bottom:12px">🎯</div>
+    <h2 style="margin:0 0 6px;font-size:1.5rem;
+               background:linear-gradient(135deg,#4ade80,#22d3ee);
+               -webkit-background-clip:text;-webkit-text-fill-color:transparent">
+      Quiz Application
+    </h2>
+    <p style="color:#94a3b8;font-size:.82rem;margin:0 0 28px;
+              font-family:'Courier New',monospace">
+      // verify your email address
+    </p>
+
+    <p style="margin:0 0 8px;font-size:.95rem">
+      Hi <strong>{{ user.first_name }}</strong>,
+    </p>
+    <p style="color:#94a3b8;font-size:.88rem;line-height:1.6;margin:0 0 28px">
+      Thanks for registering! Click the button below to verify your
+      email address and activate your account.
+    </p>
+
+    <a href="{{ verify_url }}"
+       style="display:inline-block;background:linear-gradient(135deg,#4ade80,#16a34a);
+              color:#07080f;padding:13px 32px;border-radius:10px;
+              text-decoration:none;font-weight:800;font-size:.97rem">
+      Verify Email Address
+    </a>
+
+    <p style="color:#475569;font-size:.78rem;margin:24px 0 4px">
+      This link expires in <strong style="color:#94a3b8">1 hour</strong>.
+      If you didn't create an account, you can safely ignore this email.
+    </p>
+
+    <p style="color:#2e3d63;font-size:.72rem;word-break:break-all;margin-top:16px">
+      {{ verify_url }}
+    </p>
+  </div>
+</body>
+</html>

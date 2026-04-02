@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Quiz Application</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080f;--surface:#0e1120;--card:#131829;--border:#232d4a;--border2:#2e3d63;
+  --accent:#4ade80;--accent2:#22d3ee;--warn:#f59e0b;--danger:#f87171;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#475569;--radius:16px;--rsm:10px;
+}
+body{
+  background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:20px;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(74,222,128,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(74,222,128,.03) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 10% 15%,rgba(74,222,128,.08) 0%,transparent 55%),
+    radial-gradient(ellipse at 90% 85%,rgba(34,211,238,.07) 0%,transparent 55%);
+}
+.shell{width:100%;max-width:460px;position:relative;z-index:1;}
+
+/* screens */
+.screen{display:none;animation:fadeUp .38s cubic-bezier(.4,0,.2,1) both}
+.screen.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* card */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:38px 34px;position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(74,222,128,.45),rgba(34,211,238,.3),transparent);
+}
+
+/* logo */
+.logo{text-align:center;margin-bottom:30px}
+.logo-icon{font-size:2.6rem;display:block;margin-bottom:9px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.logo h1{
+  font-size:1.8rem;font-weight:800;letter-spacing:-.5px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.logo p{color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:.72rem;margin-top:4px}
+
+/* page heading */
+.pg-title{font-size:1.4rem;font-weight:800;margin-bottom:3px}
+.pg-sub{font-family:'JetBrains Mono',monospace;font-size:.73rem;color:var(--text2);margin-bottom:26px}
+
+/* form fields */
+.field{margin-bottom:15px}
+.field label{
+  display:block;font-size:.75rem;font-weight:700;color:var(--text2);
+  font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;
+}
+.field input{
+  width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rsm);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.88rem;
+  transition:border-color .2s,box-shadow .2s;outline:none;
+}
+.field input:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(34,211,238,.1)}
+.field input.err{border-color:var(--danger);box-shadow:0 0 0 3px rgba(248,113,113,.1)}
+.field input::placeholder{color:var(--text3)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:40px}
+.pw-eye{
+  position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--text3);cursor:pointer;font-size:.95rem;
+  transition:color .2s;
+}
+.pw-eye:hover{color:var(--text)}
+.field-err{
+  font-family:'JetBrains Mono',monospace;font-size:.7rem;
+  color:var(--danger);margin-top:4px;display:none;
+}
+.field-err.show{display:block}
+
+/* strength */
+.str-wrap{margin-top:5px;display:none}
+.str-track{height:3px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:3px}
+.str-fill{height:100%;border-radius:99px;transition:width .3s,background .3s;width:0%}
+.str-lbl{font-family:'JetBrains Mono',monospace;font-size:.67rem;color:var(--text2)}
+
+/* alerts */
+.alert{
+  padding:10px 13px;border-radius:var(--rsm);
+  font-family:'JetBrains Mono',monospace;font-size:.78rem;
+  margin-bottom:14px;display:none;
+}
+.alert.show{display:block;animation:fadeUp .25s ease}
+.alert.e{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.28);color:var(--danger)}
+.alert.s{background:rgba(74,222,128,.1); border:1px solid rgba(74,222,128,.28); color:var(--accent)}
+
+/* buttons */
+.btn-p{
+  width:100%;padding:13px;
+  background:linear-gradient(135deg,var(--accent),#16a34a);
+  border:none;border-radius:var(--rsm);color:#07080f;
+  font-family:'Syne',sans-serif;font-size:.97rem;font-weight:800;cursor:pointer;
+  transition:opacity .2s,transform .15s;margin-top:6px;position:relative;overflow:hidden;
+}
+.btn-p::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.14),transparent);opacity:0;transition:opacity .2s}
+.btn-p:hover::after{opacity:1}
+.btn-p:hover:not(:disabled){transform:translateY(-1px)}
+.btn-p:disabled{opacity:.35;cursor:not-allowed}
+.btn-s{
+  width:100%;padding:12px;background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--rsm);color:var(--text);font-family:'Syne',sans-serif;
+  font-size:.92rem;font-weight:700;cursor:pointer;transition:border-color .2s,background .2s;margin-top:8px;
+}
+.btn-s:hover{border-color:var(--accent2);background:rgba(34,211,238,.05)}
+.btn-ghost{
+  background:none;border:none;color:var(--accent2);
+  font-family:'JetBrains Mono',monospace;font-size:.78rem;cursor:pointer;text-decoration:underline;padding:0;
+}
+.btn-ghost:hover{color:var(--accent)}
+.back-btn{
+  background:none;border:1px solid var(--border);border-radius:8px;
+  color:var(--text2);font-family:'Syne',sans-serif;font-size:.8rem;
+  padding:6px 12px;cursor:pointer;margin-bottom:20px;transition:color .2s,border-color .2s;
+}
+.back-btn:hover{color:var(--text);border-color:var(--text)}
+
+/* switch text */
+.sw-txt{
+  text-align:center;font-family:'JetBrains Mono',monospace;
+  font-size:.76rem;color:var(--text2);margin-top:18px;
+}
+
+/* 2FA */
+.twofa-icon{
+  width:68px;height:68px;border-radius:50%;margin:0 auto 18px;
+  background:linear-gradient(135deg,rgba(74,222,128,.12),rgba(34,211,238,.08));
+  border:1px solid rgba(74,222,128,.3);
+  display:flex;align-items:center;justify-content:center;font-size:1.7rem;
+}
+.code-box{
+  background:rgba(74,222,128,.06);border:1px dashed rgba(74,222,128,.3);
+  border-radius:var(--rsm);padding:13px 16px;margin-bottom:20px;text-align:center;
+}
+.code-box p{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text2);margin-bottom:5px}
+.code-val{
+  font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;
+  letter-spacing:.35em;color:var(--accent);text-shadow:0 0 16px rgba(74,222,128,.4);
+}
+.otp-row{display:flex;gap:9px;justify-content:center;margin-bottom:18px}
+.otp-b{
+  width:44px;height:54px;background:var(--surface);border:2px solid var(--border);
+  border-radius:9px;text-align:center;font-family:'JetBrains Mono',monospace;
+  font-size:1.35rem;font-weight:700;color:var(--accent);outline:none;
+  transition:border-color .2s,box-shadow .2s;caret-color:var(--accent);
+}
+.otp-b:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(74,222,128,.14)}
+.otp-b.filled{border-color:rgba(74,222,128,.45);background:rgba(74,222,128,.05)}
+.otp-b.shake{animation:shake .33s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.resend-row{text-align:center;font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--text2);margin-top:12px}
+.r-timer{color:var(--accent);font-weight:700}
+
+/* success */
+.check-anim{
+  width:64px;height:64px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(74,222,128,.14),rgba(34,211,238,.08));
+  border:2px solid rgba(74,222,128,.35);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;margin:0 auto 14px;
+  animation:pop .4s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* user badge */
+.ubadge{
+  display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--rsm);padding:9px 13px;margin-bottom:18px;
+}
+.uavatar{
+  width:33px;height:33px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.82rem;font-weight:800;color:#07080f;flex-shrink:0;
+}
+.uname{font-size:.86rem;font-weight:700}
+.uemail{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text2)}
+.ulogout{
+  margin-left:auto;background:none;border:1px solid var(--border);
+  border-radius:7px;color:var(--text2);font-family:'JetBrains Mono',monospace;
+  font-size:.68rem;padding:4px 9px;cursor:pointer;transition:all .2s;
+}
+.ulogout:hover{border-color:var(--danger);color:var(--danger)}
+
+/* menu */
+.menu-list{display:flex;flex-direction:column;gap:10px}
+.menu-btn{
+  display:flex;align-items:center;gap:13px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--rsm);padding:14px 17px;
+  color:var(--text);font-family:'Syne',sans-serif;font-size:.95rem;font-weight:600;
+  cursor:pointer;transition:border-color .2s,background .2s,transform .15s;width:100%;text-align:left;
+}
+.menu-btn:hover{border-color:var(--accent);background:rgba(74,222,128,.05);transform:translateX(4px)}
+.menu-btn.danger:hover{border-color:var(--danger);background:rgba(248,113,113,.05)}
+.mi{font-size:1.15rem;width:24px;text-align:center}
+.ml{flex:1}
+.ma{color:var(--text3)}
+
+/* section title */
+.sec-title{
+  font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;
+  color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin-bottom:13px;
+}
+
+/* category */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.cat-card{
+  background:var(--surface);border:2px solid var(--border);
+  border-radius:var(--rsm);padding:15px 10px;cursor:pointer;text-align:center;transition:all .2s;
+}
+.cat-card:hover{border-color:var(--accent2);transform:translateY(-3px);background:rgba(34,211,238,.04)}
+.cat-card.active{border-color:var(--accent);background:rgba(74,222,128,.07)}
+.cat-card .ci{font-size:1.65rem;display:block;margin-bottom:7px}
+.cat-card .cn{font-size:.77rem;font-weight:700}
+.cat-card .cc{font-size:.67rem;color:var(--text2);margin-top:2px;font-family:'JetBrains Mono',monospace}
+
+/* quiz */
+.qhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.q-ctr{font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--text2)}
+.q-ctr span{color:var(--accent);font-weight:700}
+.t-ring{position:relative;width:50px;height:50px}
+.t-ring svg{transform:rotate(-90deg)}
+.t-ring circle.tbg{fill:none;stroke:var(--border);stroke-width:4}
+.t-ring circle.tbar{
+  fill:none;stroke:var(--accent);stroke-width:4;
+  stroke-dasharray:138.2;stroke-dashoffset:0;
+  transition:stroke-dashoffset .95s linear,stroke .5s;stroke-linecap:round;
+}
+.t-num{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:.86rem;font-weight:700;
+}
+.prog-track{height:3px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:20px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width .4s ease}
+.q-text{font-size:1.08rem;font-weight:700;line-height:1.55;margin-bottom:18px}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt-btn{
+  display:flex;align-items:center;gap:12px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--rsm);padding:11px 14px;
+  color:var(--text);font-family:'Syne',sans-serif;font-size:.9rem;font-weight:600;
+  cursor:pointer;transition:all .18s;text-align:left;width:100%;
+}
+.opt-btn:hover:not(:disabled){border-color:var(--accent2);background:rgba(34,211,238,.07)}
+.opt-key{
+  width:26px;height:26px;border-radius:6px;background:var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:.73rem;font-weight:700;
+  flex-shrink:0;transition:background .18s;
+}
+.opt-btn.correct{border-color:var(--accent)!important;background:rgba(74,222,128,.1)!important}
+.opt-btn.correct .opt-key{background:var(--accent);color:#07080f}
+.opt-btn.wrong{border-color:var(--danger)!important;background:rgba(248,113,113,.08)!important}
+.opt-btn.wrong .opt-key{background:var(--danger);color:#07080f}
+.opt-btn:disabled{cursor:default}
+.ftost{
+  margin-top:13px;padding:9px 13px;border-radius:8px;
+  font-family:'JetBrains Mono',monospace;font-size:.8rem;display:none;
+}
+.ftost.show{display:block;animation:fadeUp .22s ease}
+.ftost.ok{background:rgba(74,222,128,.1);color:var(--accent);border:1px solid rgba(74,222,128,.25)}
+.ftost.bad{background:rgba(248,113,113,.08);color:var(--danger);border:1px solid rgba(248,113,113,.25)}
+.tmo{
+  margin-top:13px;padding:13px;border-radius:8px;
+  background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.22);
+  text-align:center;display:none;
+}
+.tmo.show{display:block;animation:fadeUp .22s ease}
+.tmo .ti{font-size:1.7rem;display:block;margin-bottom:4px}
+.tmo p{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--warn)}
+
+/* results */
+.res-ring-wrap{text-align:center;margin-bottom:18px;position:relative}
+.res-ring-wrap svg{transform:rotate(-90deg)}
+.res-ring-wrap circle.rb{fill:none;stroke:var(--border);stroke-width:6}
+.res-ring-wrap circle.rf{
+  fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round;
+  stroke-dasharray:502.4;stroke-dashoffset:502.4;
+  transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1) .3s;
+}
+.res-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.res-pct{font-size:2rem;font-weight:800;color:var(--accent)}
+.res-lbl{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--text2)}
+.res-grade{text-align:center;font-size:1.15rem;font-weight:800;margin-bottom:20px}
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:18px}
+.stat-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rsm);padding:12px 9px;text-align:center;
+}
+.sv{font-size:1.5rem;font-weight:800}
+.sk{font-size:.67rem;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.stat-box.g .sv{color:var(--accent)}
+.stat-box.r .sv{color:var(--danger)}
+.stat-box.b .sv{color:var(--accent2)}
+.rep-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* rules */
+.rules-list{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:20px}
+.rules-list li{
+  display:flex;gap:11px;align-items:flex-start;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--rsm);
+  padding:11px 13px;font-size:.88rem;line-height:1.45;
+}
+.rn{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;flex-shrink:0;font-size:.78rem;margin-top:1px}
+
+/* spinner */
+.spin{
+  width:18px;height:18px;border:2px solid rgba(7,8,15,.35);border-top-color:rgba(7,8,15,.9);
+  border-radius:50%;animation:doSpin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:7px;
+}
+@keyframes doSpin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ── WELCOME ─────────────────────────────── -->
+<div class="screen active" id="s-welcome">
+  <div class="card">
+    <div class="logo">
+      <span class="logo-icon">🎯</span>
+      <h1>Quiz Application</h1>
+      <p>// challenge your knowledge · beat the clock</p>
+    </div>
+    <button class="btn-p" onclick="goTo('s-register')">Create Account</button>
+    <button class="btn-s" onclick="goTo('s-login')">Sign In to Existing Account</button>
+    <p style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text3);margin-top:14px">
+      🔒 Your data is stored locally on this device only
+    </p>
+  </div>
+</div>
+
+<!-- ── REGISTER ────────────────────────────── -->
+<div class="screen" id="s-register">
+  <div class="card">
+    <button class="back-btn" onclick="goTo('s-welcome')">← Back</button>
+    <p class="pg-title">Create Account</p>
+    <p class="pg-sub">// register to start quizzing</p>
+    <div id="ra" class="alert e"></div>
+    <div class="field-row">
+      <div class="field">
+        <label>First Name</label>
+        <input type="text" id="rf" placeholder="Ada"/>
+        <div class="field-err" id="ef">Required</div>
+      </div>
+      <div class="field">
+        <label>Last Name</label>
+        <input type="text" id="rl" placeholder="Lovelace"/>
+        <div class="field-err" id="el">Required</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" id="re" placeholder="ada@email.com"/>
+      <div class="field-err" id="ee">Enter a valid email address</div>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="rp" placeholder="Min. 8 characters" oninput="chkStr()"/>
+        <button class="pw-eye" onclick="togPw('rp',this)" type="button">👁</button>
+      </div>
+      <div class="str-wrap" id="sw">
+        <div class="str-track"><div class="str-fill" id="sf"></div></div>
+        <div class="str-lbl" id="sl"></div>
+      </div>
+      <div class="field-err" id="ep">Minimum 8 characters required</div>
+    </div>
+    <div class="field">
+      <label>Confirm Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="rp2" placeholder="Repeat your password"/>
+        <button class="pw-eye" onclick="togPw('rp2',this)" type="button">👁</button>
+      </div>
+      <div class="field-err" id="ep2">Passwords do not match</div>
+    </div>
+    <button class="btn-p" id="reg-btn" onclick="doRegister()">Create Account</button>
+    <p class="sw-txt">Already have an account? <button class="btn-ghost" onclick="goTo('s-login')">Sign In</button></p>
+  </div>
+</div>
+
+<!-- ── LOGIN ───────────────────────────────── -->
+<div class="screen" id="s-login">
+  <div class="card">
+    <button class="back-btn" onclick="goTo('s-welcome')">← Back</button>
+    <p class="pg-title">Welcome Back</p>
+    <p class="pg-sub">// sign in to continue</p>
+    <div id="la" class="alert e"></div>
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" id="le" placeholder="ada@email.com"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="lp" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <button class="pw-eye" onclick="togPw('lp',this)" type="button">👁</button>
+      </div>
+    </div>
+    <button class="btn-p" id="login-btn" onclick="doLogin()">Sign In</button>
+    <p class="sw-txt">No account yet? <button class="btn-ghost" onclick="goTo('s-register')">Create one</button></p>
+  </div>
+</div>
+
+<!-- ── 2FA ─────────────────────────────────── -->
+<div class="screen" id="s-2fa">
+  <div class="card">
+    <div class="twofa-icon">🔐</div>
+    <p class="pg-title" style="text-align:center">Two-Factor Auth</p>
+    <p class="pg-sub" style="text-align:center;margin-bottom:18px">// enter the 6-digit verification code</p>
+    <div class="code-box">
+      <p>📧 Your one-time code (simulated email)</p>
+      <div class="code-val" id="fa-code">------</div>
+    </div>
+    <div id="fa-alert" class="alert e"></div>
+    <div class="otp-row" id="otp-row">
+      <input class="otp-b" maxlength="1" type="text" inputmode="numeric"/>
+      <input class="otp-b" maxlength="1" type="text" inputmode="numeric"/>
+      <input class="otp-b" maxlength="1" type="text" inputmode="numeric"/>
+      <input class="otp-b" maxlength="1" type="text" inputmode="numeric"/>
+      <input class="otp-b" maxlength="1" type="text" inputmode="numeric"/>
+      <input class="otp-b" maxlength="1" type="text" inputmode="numeric"/>
+    </div>
+    <button class="btn-p" onclick="verify2FA()">Verify &amp; Continue →</button>
+    <div class="resend-row">
+      Code expired? <button class="btn-ghost" onclick="regenCode()">Resend</button>
+      &nbsp;·&nbsp;<span class="r-timer" id="rtimer">0:30</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── SUCCESS ─────────────────────────────── -->
+<div class="screen" id="s-ok">
+  <div class="card" style="text-align:center;padding:50px 34px">
+    <div class="check-anim">✅</div>
+    <p class="pg-title">You're In!</p>
+    <p style="color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:.78rem;margin:6px 0 28px">
+      Identity verified — welcome aboard
+    </p>
+    <button class="btn-p" onclick="goToMenu()">Start Playing →</button>
+  </div>
+</div>
+
+<!-- ── MAIN MENU ───────────────────────────── -->
+<div class="screen" id="s-menu">
+  <div class="card">
+    <div id="ubadge" class="ubadge"></div>
+    <div class="logo" style="margin-bottom:20px">
+      <span class="logo-icon" style="font-size:1.9rem">🎯</span>
+      <h1 style="font-size:1.45rem">Quiz Application</h1>
+    </div>
+    <div class="menu-list">
+      <button class="menu-btn" onclick="goTo('s-category')"><span class="mi">🚀</span><span class="ml">Start Quiz</span><span class="ma">›</span></button>
+      <button class="menu-btn" onclick="goTo('s-rules')"><span class="mi">📋</span><span class="ml">View Rules</span><span class="ma">›</span></button>
+      <button class="menu-btn danger" onclick="logout()"><span class="mi">🚪</span><span class="ml">Logout</span><span class="ma">›</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ── RULES ───────────────────────────────── -->
+<div class="screen" id="s-rules">
+  <div class="card">
+    <button class="back-btn" onclick="goTo('s-menu')">← Back to Menu</button>
+    <p class="sec-title">📋 Rules</p>
+    <ul class="rules-list">
+      <li><span class="rn">01</span>Choose a category to begin the quiz.</li>
+      <li><span class="rn">02</span>Each question is multiple choice — pick A, B, C, or D.</li>
+      <li><span class="rn">03</span>You have <strong>15 seconds</strong> to answer each question.</li>
+      <li><span class="rn">04</span>Unanswered questions are automatically marked incorrect.</li>
+      <li><span class="rn">05</span>Your score, percentage and grade are shown at the end.</li>
+      <li><span class="rn">06</span>You can replay as many times as you like!</li>
+    </ul>
+    <button class="btn-p" onclick="goTo('s-menu')">Got It — Back to Menu</button>
+  </div>
+</div>
+
+<!-- ── CATEGORY ────────────────────────────── -->
+<div class="screen" id="s-category">
+  <div class="card">
+    <button class="back-btn" onclick="goTo('s-menu')">← Back to Menu</button>
+    <p class="sec-title">Select Category</p>
+    <div class="cat-grid" id="cat-grid"></div>
+    <button class="btn-p" id="start-btn" disabled onclick="startQuiz()">Start Quiz →</button>
+  </div>
+</div>
+
+<!-- ── QUIZ ────────────────────────────────── -->
+<div class="screen" id="s-quiz">
+  <div class="card">
+    <div class="qhdr">
+      <div>
+        <div class="q-ctr">Question <span id="qn">1</span> / <span id="qt">5</span></div>
+        <div style="font-size:.68rem;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-top:2px" id="clbl"></div>
+      </div>
+      <div class="t-ring">
+        <svg width="50" height="50" viewBox="0 0 50 50">
+          <circle class="tbg" cx="25" cy="25" r="22"/>
+          <circle class="tbar" cx="25" cy="25" r="22" id="tbar"/>
+        </svg>
+        <div class="t-num" id="tnum">15</div>
+      </div>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="pfill" style="width:0%"></div></div>
+    <div class="q-text" id="qtxt"></div>
+    <div class="opts" id="opts"></div>
+    <div class="ftost" id="ftost"></div>
+    <div class="tmo" id="tmo">
+      <span class="ti">⏰</span>
+      <p>Time's up! Moving to next question...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── RESULTS ─────────────────────────────── -->
+<div class="screen" id="s-results">
+  <div class="card">
+    <p class="sec-title" style="text-align:center;margin-bottom:16px">Quiz Complete! 🎉</p>
+    <div class="res-ring-wrap">
+      <svg width="138" height="138" viewBox="0 0 138 138">
+        <circle class="rb" cx="69" cy="69" r="60"/>
+        <circle class="rf" cx="69" cy="69" r="60" id="rring"/>
+      </svg>
+      <div class="res-center">
+        <div class="res-pct" id="rpct">0%</div>
+        <div class="res-lbl">SCORE</div>
+      </div>
+    </div>
+    <div class="res-grade" id="rgrade"></div>
+    <div class="stat-row">
+      <div class="stat-box g"><div class="sv" id="rc">0</div><div class="sk">✅ Correct</div></div>
+      <div class="stat-box r"><div class="sv" id="rw">0</div><div class="sk">❌ Wrong</div></div>
+      <div class="stat-box b"><div class="sv" id="rtot">0</div><div class="sk">📝 Total</div></div>
+    </div>
+    <div class="rep-row">
+      <button class="btn-s" style="margin-top:0" onclick="goTo('s-menu')">🏠 Menu</button>
+      <button class="btn-p" style="margin-top:0" onclick="goTo('s-category')">🔁 Play Again</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ── storage helpers ──────────────────────────────────────────────────────────
+const getUsers  = ()=>{ try{ return JSON.parse(localStorage.getItem('qz_users')||'{}') }catch{ return {} } }
+const saveUsers = u => localStorage.setItem('qz_users', JSON.stringify(u))
+const setSession= u => localStorage.setItem('qz_sess',  JSON.stringify(u))
+const getSession= ()=>{ try{ return JSON.parse(localStorage.getItem('qz_sess')||'null') }catch{ return null } }
+const clrSession= ()=> localStorage.removeItem('qz_sess')
+
+// ── password hashing ──────────────────────────────────────────────────────────
+async function hashPw(pw){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw))
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('')
+}
+
+// ── question bank ────────────────────────────────────────────────────────────
+const CATS=[
+  { name:"General Knowledge", icon:"🌍", questions:[
+    {q:"What is the capital city of Australia?",        opts:["Sydney","Melbourne","Canberra","Brisbane"],    ans:2},
+    {q:"How many continents are there on Earth?",       opts:["5","6","8","7"],                               ans:3},
+    {q:"Which language is spoken in Brazil?",           opts:["Spanish","Portuguese","French","English"],     ans:1},
+    {q:"Who painted the Mona Lisa?",                    opts:["Michelangelo","Van Gogh","Leonardo da Vinci","Picasso"],ans:2},
+    {q:"What is the largest ocean on Earth?",           opts:["Atlantic","Indian","Arctic","Pacific"],         ans:3},
+    {q:"In which year did World War II end?",           opts:["1943","1944","1945","1946"],                   ans:2},
+    {q:"What is the currency of Japan?",                opts:["Yuan","Won","Ringgit","Yen"],                  ans:3},
+  ]},
+  { name:"Science", icon:"🔬", questions:[
+    {q:"What is the chemical symbol for water?",        opts:["WO","HO","H₂O","W₂O"],                        ans:2},
+    {q:"What planet is known as the Red Planet?",       opts:["Saturn","Mars","Jupiter","Venus"],             ans:1},
+    {q:"What gas do plants absorb from atmosphere?",    opts:["Oxygen","Nitrogen","Carbon Dioxide","Hydrogen"],ans:2},
+    {q:"How many bones in the adult human body?",       opts:["186","206","216","226"],                       ans:1},
+    {q:"What is the powerhouse of the cell?",           opts:["Nucleus","Ribosome","Mitochondria","Chloroplast"],ans:2},
+    {q:"Speed of light (approx.) in km/s?",             opts:["150,000","200,000","300,000","400,000"],       ans:2},
+    {q:"Which element has atomic number 1?",            opts:["Helium","Carbon","Oxygen","Hydrogen"],          ans:3},
+  ]},
+  { name:"Technology", icon:"💻", questions:[
+    {q:"What does 'CPU' stand for?",                    opts:["Central Process Unit","Central Processing Unit","Computer Personal Unit","Core Processing Unit"],ans:1},
+    {q:"Who created the Python programming language?",  opts:["Google","Microsoft","Python Software Foundation","Oracle"],ans:2},
+    {q:"What does 'HTML' stand for?",                   opts:["Hyper Transfer Markup Language","High Text Markup Language","Hyper Text Markup Language","Hyper Text Modern Language"],ans:2},
+    {q:"Which is NOT a programming language?",          opts:["Swift","Kotlin","Photon","Rust"],              ans:2},
+    {q:"What does 'RAM' stand for?",                    opts:["Random Access Memory","Read Access Memory","Run Access Module","Random Array Module"],ans:0},
+    {q:"Who developed the Android OS?",                 opts:["Apple","Samsung","Google","Microsoft"],         ans:2},
+    {q:"Base of the binary number system?",             opts:["8","10","16","2"],                             ans:3},
+  ]},
+]
+const GRADES=[
+  {min:100,label:"Perfect Score! 🏆",color:"#fbbf24"},
+  {min:80, label:"Excellent! 🥇",    color:"#4ade80"},
+  {min:60, label:"Good Job! 🥈",     color:"#22d3ee"},
+  {min:40, label:"Needs Improvement 🥉",color:"#f59e0b"},
+  {min:0,  label:"Keep Practising 📖",  color:"#f87171"},
+]
+const KEYS=["A","B","C","D"]
+const TIME_LIMIT=15, NUM_Q=5
+
+// ── state ────────────────────────────────────────────────────────────────────
+let _2faCode='', _2faPend=null
+let selCat=null, questions=[]
+let qIdx=0, correct=0, wrong=0
+let timer=null, tLeft=TIME_LIMIT, answered=false
+let resendT=null, resendL=30
+
+// ── navigation ────────────────────────────────────────────────────────────────
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'))
+  document.getElementById(id).classList.add('active')
+}
+
+// auto-login
+window.addEventListener('DOMContentLoaded',()=>{
+  buildCats(); setupOTP()
+  const s=getSession()
+  if(s){ renderBadge(s); goTo('s-menu') }
+})
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+const togPw=(id,btn)=>{
+  const i=document.getElementById(id)
+  i.type=i.type==='password'?'text':'password'
+  btn.textContent=i.type==='password'?'👁':'🙈'
+}
+const showA=(id,msg,t='e')=>{ const e=document.getElementById(id); e.textContent=msg; e.className='alert '+t+' show' }
+const hideA=id=>{ document.getElementById(id).className='alert e' }
+const fErr=(id,on)=>{ document.getElementById(id).className='field-err'+(on?' show':'') }
+const fCls=(id,e)=>{ document.getElementById(id).className=e?'err':'' }
+const shuffle=a=>{ const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b }
+const genCode=()=>String(Math.floor(100000+Math.random()*900000))
+
+// ── password strength ─────────────────────────────────────────────────────────
+function chkStr(){
+  const pw=document.getElementById('rp').value
+  const w=document.getElementById('sw')
+  if(!pw){ w.style.display='none'; return }
+  w.style.display='block'
+  let sc=0
+  if(pw.length>=8)sc++
+  if(/[A-Z]/.test(pw))sc++
+  if(/[0-9]/.test(pw))sc++
+  if(/[^A-Za-z0-9]/.test(pw))sc++
+  const lvl=[{w:'25%',c:'#f87171',l:'Weak'},{w:'50%',c:'#f59e0b',l:'Fair'},{w:'75%',c:'#22d3ee',l:'Good'},{w:'100%',c:'#4ade80',l:'Strong'}][Math.max(0,sc-1)]
+  const f=document.getElementById('sf'),lb=document.getElementById('sl')
+  f.style.width=lvl.w; f.style.background=lvl.c
+  lb.textContent=lvl.l; lb.style.color=lvl.c
+}
+
+// ── register ──────────────────────────────────────────────────────────────────
+function doRegister(){
+  hideA('ra')
+  const first=document.getElementById('rf').value.trim()
+  const last =document.getElementById('rl').value.trim()
+  const email=document.getElementById('re').value.trim().toLowerCase()
+  const pw   =document.getElementById('rp').value
+  const pw2  =document.getElementById('rp2').value
+  let ok=true
+  const chk=(cond,errId,inpId)=>{ fErr(errId,!cond); fCls(inpId,!cond); if(!cond)ok=false }
+  chk(first,'ef','rf'); chk(last,'el','rl')
+  chk(email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),'ee','re')
+  chk(pw.length>=8,'ep','rp'); chk(pw===pw2,'ep2','rp2')
+  if(!ok)return
+  const users=getUsers()
+  if(users[email]){ showA('ra','An account with this email already exists.'); return }
+  const btn=document.getElementById('reg-btn')
+  btn.innerHTML='<span class="spin"></span>Creating account...'; btn.disabled=true
+  setTimeout(async ()=>{
+    btn.innerHTML='Create Account'; btn.disabled=false
+    users[email]={ first, last, email, pw: await hashPw(pw) }
+    saveUsers(users)
+    _2faPend={ first, last, email }
+    launch2FA()
+  },900)
+}
+
+// ── login ─────────────────────────────────────────────────────────────────────
+function doLogin(){
+  hideA('la')
+  const email=document.getElementById('le').value.trim().toLowerCase()
+  const pw   =document.getElementById('lp').value
+  if(!email||!pw){ showA('la','Please fill in all fields.'); return }
+  const btn=document.getElementById('login-btn')
+  btn.innerHTML='<span class="spin"></span>Signing in...'; btn.disabled=true
+  setTimeout(async ()=>{
+    btn.innerHTML='Sign In'; btn.disabled=false
+    const u=getUsers()[email]
+    if(!u||u.pw!==await hashPw(pw)){ showA('la','Incorrect email or password.'); return }
+    _2faPend=u; launch2FA()
+  },700)
+}
+
+// ── 2FA ───────────────────────────────────────────────────────────────────────
+function launch2FA(){
+  _2faCode=genCode()
+  document.getElementById('fa-code').textContent=_2faCode
+  hideA('fa-alert'); clearOTP(); startResend(); goTo('s-2fa')
+  setTimeout(()=>document.querySelector('.otp-b').focus(),400)
+}
+function regenCode(){
+  _2faCode=genCode()
+  document.getElementById('fa-code').textContent=_2faCode
+  hideA('fa-alert'); clearOTP(); startResend()
+}
+function startResend(){
+  clearInterval(resendT); resendL=30
+  document.getElementById('rtimer').textContent='0:30'
+  resendT=setInterval(()=>{
+    resendL--
+    document.getElementById('rtimer').textContent=`0:${resendL<10?'0':''}${resendL}`
+    if(resendL<=0){ clearInterval(resendT); document.getElementById('rtimer').textContent='expired' }
+  },1000)
+}
+function setupOTP(){
+  const boxes=[...document.querySelectorAll('.otp-b')]
+  boxes.forEach((b,i)=>{
+    b.addEventListener('input',e=>{
+      const v=e.target.value.replace(/\D/g,'')
+      b.value=v?v[0]:''; b.classList.toggle('filled',!!b.value)
+      if(b.value&&i<boxes.length-1)boxes[i+1].focus()
+      if(boxes.every(x=>x.value))setTimeout(verify2FA,200)
+    })
+    b.addEventListener('keydown',e=>{
+      if(e.key==='Backspace'&&!b.value&&i>0){ boxes[i-1].focus(); boxes[i-1].value=''; boxes[i-1].classList.remove('filled') }
+    })
+    b.addEventListener('paste',e=>{
+      e.preventDefault()
+      const t=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'')
+      boxes.forEach((x,j)=>{ x.value=t[j]||''; x.classList.toggle('filled',!!x.value) })
+      if(t.length>=6)setTimeout(verify2FA,200)
+    })
+  })
+}
+function clearOTP(){ document.querySelectorAll('.otp-b').forEach(b=>{ b.value=''; b.classList.remove('filled') }) }
+function verify2FA(){
+  const code=[...document.querySelectorAll('.otp-b')].map(b=>b.value).join('')
+  if(code.length<6){ showA('fa-alert','Please enter the full 6-digit code.'); return }
+  if(code!==_2faCode){
+    showA('fa-alert','Incorrect code — please try again.')
+    document.querySelectorAll('.otp-b').forEach(b=>{ b.classList.add('shake'); setTimeout(()=>b.classList.remove('shake'),400) })
+    clearOTP(); document.querySelector('.otp-b').focus(); return
+  }
+  clearInterval(resendT)
+  setSession(_2faPend); renderBadge(_2faPend); goTo('s-ok')
+}
+
+// ── session ───────────────────────────────────────────────────────────────────
+function renderBadge(u){
+  const ini=(u.first[0]+(u.last?u.last[0]:'')).toUpperCase()
+  document.getElementById('ubadge').innerHTML=`
+    <div class="uavatar">${ini}</div>
+    <div><div class="uname">${u.first} ${u.last||''}</div><div class="uemail">${u.email}</div></div>
+    <button class="ulogout" onclick="logout()">Logout</button>`
+}
+function goToMenu(){ goTo('s-menu') }
+function logout(){ clrSession(); goTo('s-welcome') }
+
+// ── category grid ─────────────────────────────────────────────────────────────
+function buildCats(){
+  const g=document.getElementById('cat-grid')
+  CATS.forEach((c,i)=>{
+    const el=document.createElement('div')
+    el.className='cat-card'
+    el.innerHTML=`<span class="ci">${c.icon}</span><div class="cn">${c.name}</div><div class="cc">${c.questions.length} Q's</div>`
+    el.onclick=()=>{
+      document.querySelectorAll('.cat-card').forEach(x=>x.classList.remove('active'))
+      el.classList.add('active'); selCat=i
+      document.getElementById('start-btn').disabled=false
+    }
+    g.appendChild(el)
+  })
+}
+
+// ── quiz ──────────────────────────────────────────────────────────────────────
+function startQuiz(){
+  questions=shuffle(CATS[selCat].questions).slice(0,NUM_Q)
+  qIdx=0; correct=0; wrong=0
+  document.getElementById('qt').textContent=questions.length
+  document.getElementById('clbl').textContent=CATS[selCat].name
+  goTo('s-quiz'); renderQ()
+}
+function renderQ(){
+  answered=false
+  const q=questions[qIdx]
+  document.getElementById('qn').textContent=qIdx+1
+  document.getElementById('pfill').style.width=(qIdx/questions.length*100)+'%'
+  document.getElementById('qtxt').textContent=q.q
+  document.getElementById('ftost').className='ftost'
+  document.getElementById('tmo').className='tmo'
+  const optsEl=document.getElementById('opts'); optsEl.innerHTML=''
+  q.opts.forEach((opt,i)=>{
+    const b=document.createElement('button')
+    b.className='opt-btn'; b.id=`ob${i}`
+    b.innerHTML=`<span class="opt-key">${KEYS[i]}</span><span>${opt}</span>`
+    b.onclick=()=>selAns(i); optsEl.appendChild(b)
+  })
+  startTimer()
+}
+function startTimer(){
+  clearInterval(timer); tLeft=TIME_LIMIT; updTimer(tLeft)
+  timer=setInterval(()=>{ tLeft--; updTimer(tLeft); if(tLeft<=0){ clearInterval(timer); onTimeout() } },1000)
+}
+function updTimer(t){
+  const bar=document.getElementById('tbar'),num=document.getElementById('tnum')
+  bar.style.strokeDashoffset=138.2*(1-t/TIME_LIMIT)
+  bar.style.stroke=t<=5?'var(--danger)':t<=8?'var(--warn)':'var(--accent)'
+  num.textContent=t; num.style.color=t<=5?'var(--danger)':t<=8?'var(--warn)':'var(--text)'
+}
+function onTimeout(){
+  if(answered)return; answered=true; wrong++; disOpts()
+  document.getElementById(`ob${questions[qIdx].ans}`).classList.add('correct')
+  document.getElementById('tmo').classList.add('show')
+  setTimeout(nextQ,2000)
+}
+function selAns(i){
+  if(answered)return; answered=true; clearInterval(timer); disOpts()
+  const q=questions[qIdx],t=document.getElementById('ftost')
+  if(i===q.ans){
+    correct++; document.getElementById(`ob${i}`).classList.add('correct')
+    t.textContent='✅  Correct! Well done!'; t.className='ftost show ok'
+  } else {
+    wrong++; document.getElementById(`ob${i}`).classList.add('wrong')
+    document.getElementById(`ob${q.ans}`).classList.add('correct')
+    t.textContent=`❌  Wrong! Correct answer: ${KEYS[q.ans]}`; t.className='ftost show bad'
+  }
+  setTimeout(nextQ,1800)
+}
+function disOpts(){ document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true) }
+function nextQ(){ qIdx++; qIdx>=questions.length?showResults():renderQ() }
+function showResults(){
+  const total=questions.length, pct=Math.round((correct/total)*100)
+  const grade=GRADES.find(g=>pct>=g.min)
+  document.getElementById('rpct').textContent=pct+'%'
+  document.getElementById('rc').textContent=correct
+  document.getElementById('rw').textContent=wrong
+  document.getElementById('rtot').textContent=total
+  document.getElementById('rgrade').innerHTML=`<span style="color:${grade.color}">${grade.label}</span>`
+  goTo('s-results')
+  setTimeout(()=>{
+    document.getElementById('rring').style.strokeDashoffset=502.4*(1-pct/100)
+    document.getElementById('rring').style.stroke=grade.color
+  },150)
+}
+</script>
+</body>
+</html>

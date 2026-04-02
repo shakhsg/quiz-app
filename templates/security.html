@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="screen active">
+  <div class="card">
+
+    <a href="{{ url_for('quiz') }}" class="back-btn">← Back to Menu</a>
+    <p class="pg-title">Security Settings</p>
+    <p class="pg-sub">// two-factor authentication</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert {{ 's' if category == 'success' else 'e' }} show">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- MFA status card -->
+    <div style="background:var(--surface);border:1px solid var(--border);
+                border-radius:var(--rsm);padding:15px 16px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-weight:700;font-size:.93rem">Authenticator App (TOTP)</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.71rem;margin-top:4px;
+                      color:{{ 'var(--accent)' if current_user.totp_enabled else 'var(--text3)' }}">
+            {% if current_user.totp_enabled %}✓ Enabled{% else %}Not enabled{% endif %}
+          </div>
+        </div>
+        {% if not current_user.totp_enabled %}
+          <a href="{{ url_for('setup_mfa') }}"
+             class="btn-p"
+             style="width:auto;padding:9px 20px;margin-top:0;font-size:.84rem;flex-shrink:0">
+            Enable
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if current_user.totp_enabled %}
+
+      <!-- Backup code count -->
+      <div style="background:var(--surface);border:1px solid var(--border);
+                  border-radius:var(--rsm);padding:12px 16px;margin-bottom:20px;
+                  font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text2)">
+        Backup codes remaining:
+        <strong style="color:{{ 'var(--accent)' if current_user.backup_codes_count > 2 else 'var(--warn)' }}">
+          {{ current_user.backup_codes_count }} / 8
+        </strong>
+        {% if current_user.backup_codes_count <= 2 %}
+          <br><span style="color:var(--warn)">
+            ⚠ Running low — disable and re-enable MFA to generate new codes.
+          </span>
+        {% endif %}
+      </div>
+
+      <!-- Disable MFA -->
+      <p class="sec-title">Disable MFA</p>
+      <p style="font-size:.83rem;color:var(--text2);margin-bottom:14px;line-height:1.55">
+        Enter a current authenticator code or any backup code to turn off MFA.
+      </p>
+      <form method="POST" action="{{ url_for('disable_mfa') }}" novalidate>
+        {{ disable_form.hidden_tag() }}
+        <div class="field">
+          <label>Code</label>
+          <input type="text" name="code" placeholder="000000 or backup code"
+                 inputmode="numeric" maxlength="9"
+                 style="letter-spacing:.1em"/>
+        </div>
+        <button class="btn-s" type="submit"
+                style="border-color:var(--danger);color:var(--danger);margin-top:0">
+          Disable MFA
+        </button>
+      </form>
+
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="screen active">
+  <div class="card">
+
+    <p class="pg-title">Save Your Backup Codes</p>
+    <p class="pg-sub">// store these somewhere safe — each code works only once</p>
+
+    <div class="alert e show" style="margin-bottom:18px">
+      ⚠ These codes will <strong>not be shown again</strong>. Save them now.
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:22px">
+      {% for code in codes %}
+        <div style="background:var(--surface);border:1px solid var(--border);
+                    border-radius:var(--rsm);padding:11px 8px;text-align:center;
+                    font-family:'JetBrains Mono',monospace;font-size:.9rem;
+                    letter-spacing:.12em;color:var(--accent)">
+          {{ code }}
+        </div>
+      {% endfor %}
+    </div>
+
+    <p style="font-size:.8rem;color:var(--text2);line-height:1.55;margin-bottom:18px">
+      Use a backup code in place of your authenticator code if you lose access to your phone.
+      Each code can only be used once and is then removed.
+    </p>
+
+    <a href="{{ url_for('security') }}" class="btn-p">I've saved my codes →</a>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="screen active">
+  <div class="card" style="text-align:center">
+
+    <div style="font-size:3rem;margin-bottom:16px">📧</div>
+    <p class="pg-title">Check your email</p>
+    <p class="pg-sub" style="margin-bottom:20px">// a verification link has been sent to</p>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);
+                padding:10px 14px;margin-bottom:22px;font-family:'JetBrains Mono',monospace;
+                font-size:.85rem;color:var(--accent);word-break:break-all">
+      {{ email }}
+    </div>
+
+    <p style="font-size:.84rem;color:var(--text2);line-height:1.6;margin-bottom:22px">
+      Click the link in the email to activate your account.<br>
+      The link expires in <strong style="color:var(--text)">1 hour</strong>.
+    </p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert {{ 's' if category == 'success' else 'e' }} show" style="text-align:left">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <a href="{{ url_for('resend_verification') }}" class="btn-s" style="margin-top:0">
+      Resend email
+    </a>
+    <a href="{{ url_for('login') }}" class="btn-ghost" style="display:block;margin-top:16px">
+      Already verified? Sign in →
+    </a>
+  </div>
+</div>
+{% endblock %}

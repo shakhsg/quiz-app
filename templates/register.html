@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="screen active">
+  <div class="card">
+    <a href="{{ url_for('welcome') }}" class="back-btn">← Back</a>
+    <p class="pg-title">Create Account</p>
+    <p class="pg-sub">// register to start quizzing</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert {{ 's' if category == 'success' else 'e' }} show">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('register') }}" id="reg-form" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="field-row">
+        <div class="field">
+          <label>First Name</label>
+          <input type="text" id="rf" name="first_name" placeholder="Ada"
+                 value="{{ form.first_name.data or '' }}"/>
+          <div class="field-err" id="ef">
+            {%- if form.first_name.errors %}{{ form.first_name.errors[0] }}{% else %}Required{% endif -%}
+          </div>
+        </div>
+        <div class="field">
+          <label>Last Name</label>
+          <input type="text" id="rl" name="last_name" placeholder="Lovelace"
+                 value="{{ form.last_name.data or '' }}"/>
+          <div class="field-err" id="el">
+            {%- if form.last_name.errors %}{{ form.last_name.errors[0] }}{% else %}Required{% endif -%}
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="re" name="email" placeholder="ada@email.com"
+               value="{{ form.email.data or '' }}"/>
+        <div class="field-err" id="ee">
+          {%- if form.email.errors %}{{ form.email.errors[0] }}{% else %}Enter a valid email address{% endif -%}
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="rp" name="password" placeholder="Min. 8 characters"
+                 oninput="chkStr()"/>
+          <button class="pw-eye" onclick="togPw('rp',this)" type="button">👁</button>
+        </div>
+        <div class="str-wrap" id="sw">
+          <div class="str-track"><div class="str-fill" id="sf"></div></div>
+          <div class="str-lbl" id="sl"></div>
+        </div>
+        <div class="field-err" id="ep">
+          {%- if form.password.errors %}{{ form.password.errors[0] }}{% else %}Minimum 8 characters required{% endif -%}
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Confirm Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="rp2" name="confirm" placeholder="Repeat your password"/>
+          <button class="pw-eye" onclick="togPw('rp2',this)" type="button">👁</button>
+        </div>
+        <div class="field-err" id="ep2">
+          {%- if form.confirm.errors %}{{ form.confirm.errors[0] }}{% else %}Passwords do not match{% endif -%}
+        </div>
+      </div>
+
+      <button class="btn-p" id="reg-btn" type="submit">Create Account</button>
+    </form>
+
+    <p class="sw-txt">Already have an account? <a href="{{ url_for('login') }}" class="btn-ghost">Sign In</a></p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const togPw=(id,btn)=>{
+  const i=document.getElementById(id)
+  i.type=i.type==='password'?'text':'password'
+  btn.textContent=i.type==='password'?'👁':'🙈'
+}
+function chkStr(){
+  const pw=document.getElementById('rp').value
+  const w=document.getElementById('sw')
+  if(!pw){ w.style.display='none'; return }
+  w.style.display='block'
+  let sc=0
+  if(pw.length>=8)sc++
+  if(/[A-Z]/.test(pw))sc++
+  if(/[0-9]/.test(pw))sc++
+  if(/[^A-Za-z0-9]/.test(pw))sc++
+  const lvl=[{w:'25%',c:'#f87171',l:'Weak'},{w:'50%',c:'#f59e0b',l:'Fair'},{w:'75%',c:'#22d3ee',l:'Good'},{w:'100%',c:'#4ade80',l:'Strong'}][Math.max(0,sc-1)]
+  const f=document.getElementById('sf'),lb=document.getElementById('sl')
+  f.style.width=lvl.w; f.style.background=lvl.c
+  lb.textContent=lvl.l; lb.style.color=lvl.c
+}
+
+// Show server-side field errors on load if present
+window.addEventListener('DOMContentLoaded',()=>{
+  const show=(errId, inpId) => {
+    const e=document.getElementById(errId)
+    if(e && e.textContent.trim()){
+      e.classList.add('show')
+      const inp=document.getElementById(inpId)
+      if(inp) inp.classList.add('err')
+    }
+  }
+  {% if form.first_name.errors %}show('ef','rf'){% endif %}
+  {% if form.last_name.errors %}show('el','rl'){% endif %}
+  {% if form.email.errors %}show('ee','re'){% endif %}
+  {% if form.password.errors %}show('ep','rp'){% endif %}
+  {% if form.confirm.errors %}show('ep2','rp2'){% endif %}
+})
+</script>
+{% endblock %}

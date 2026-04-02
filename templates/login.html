@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="screen active">
+  <div class="card">
+    <a href="{{ url_for('welcome') }}" class="back-btn">← Back</a>
+    <p class="pg-title">Welcome Back</p>
+    <p class="pg-sub">// sign in to continue</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert {{ 's' if category == 'success' else 'e' }} show">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('login') }}" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="le" name="email" placeholder="ada@email.com"
+               value="{{ form.email.data or '' }}"/>
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="lp" name="password" placeholder="Your password"/>
+          <button class="pw-eye" onclick="togPw('lp',this)" type="button">👁</button>
+        </div>
+      </div>
+
+      <button class="btn-p" type="submit">Sign In</button>
+    </form>
+
+    <p class="sw-txt">No account yet? <a href="{{ url_for('register') }}" class="btn-ghost">Create one</a></p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const togPw=(id,btn)=>{
+  const i=document.getElementById(id)
+  i.type=i.type==='password'?'text':'password'
+  btn.textContent=i.type==='password'?'👁':'🙈'
+}
+</script>
+{% endblock %}

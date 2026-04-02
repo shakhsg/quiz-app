@@ -1,0 +1,113 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<!-- ── MENU ───────────────────────────────────── -->
+<div class="screen active" id="s-menu">
+  <div class="card">
+    <div class="ubadge">
+      <div class="uavatar">{{ current_user.initials }}</div>
+      <div>
+        <div class="uname">{{ current_user.full_name }}</div>
+        <div class="uemail">{{ current_user.email }}</div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="ulogout">Logout</a>
+    </div>
+    <div class="logo" style="margin-bottom:20px">
+      <span class="logo-icon" style="font-size:1.9rem">🎯</span>
+      <h1 style="font-size:1.45rem">Quiz Application</h1>
+    </div>
+    <div class="menu-list">
+      <button class="menu-btn" onclick="goTo('s-category')"><span class="mi">🚀</span><span class="ml">Start Quiz</span><span class="ma">›</span></button>
+      <button class="menu-btn" onclick="goTo('s-rules')"><span class="mi">📋</span><span class="ml">View Rules</span><span class="ma">›</span></button>
+      <a href="{{ url_for('security') }}" class="menu-btn"><span class="mi">🔐</span><span class="ml">Security</span><span class="ma">›</span></a>
+      <a href="{{ url_for('logout') }}" class="menu-btn danger"><span class="mi">🚪</span><span class="ml">Logout</span><span class="ma">›</span></a>
+    </div>
+  </div>
+</div>
+
+<!-- ── RULES ───────────────────────────────────── -->
+<div class="screen" id="s-rules">
+  <div class="card">
+    <button class="back-btn" onclick="goTo('s-menu')">← Back to Menu</button>
+    <p class="sec-title">📋 Rules</p>
+    <ul class="rules-list">
+      <li><span class="rn">01</span>Choose a category to begin the quiz.</li>
+      <li><span class="rn">02</span>Each question is multiple choice — pick A, B, C, or D.</li>
+      <li><span class="rn">03</span>You have <strong>15 seconds</strong> to answer each question.</li>
+      <li><span class="rn">04</span>Unanswered questions are automatically marked incorrect.</li>
+      <li><span class="rn">05</span>Your score, percentage and grade are shown at the end.</li>
+      <li><span class="rn">06</span>You can replay as many times as you like!</li>
+    </ul>
+    <button class="btn-p" onclick="goTo('s-menu')">Got It — Back to Menu</button>
+  </div>
+</div>
+
+<!-- ── CATEGORY ────────────────────────────────── -->
+<div class="screen" id="s-category">
+  <div class="card">
+    <button class="back-btn" onclick="goTo('s-menu')">← Back to Menu</button>
+    <p class="sec-title">Select Category</p>
+    <div class="cat-grid" id="cat-grid"></div>
+    <button class="btn-p" id="start-btn" disabled onclick="startQuiz()">Start Quiz →</button>
+  </div>
+</div>
+
+<!-- ── QUIZ ────────────────────────────────────── -->
+<div class="screen" id="s-quiz">
+  <div class="card">
+    <div class="qhdr">
+      <div>
+        <div class="q-ctr">Question <span id="qn">1</span> / <span id="qt">5</span></div>
+        <div style="font-size:.68rem;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-top:2px" id="clbl"></div>
+      </div>
+      <div class="t-ring">
+        <svg width="50" height="50" viewBox="0 0 50 50">
+          <circle class="tbg" cx="25" cy="25" r="22"/>
+          <circle class="tbar" cx="25" cy="25" r="22" id="tbar"/>
+        </svg>
+        <div class="t-num" id="tnum">15</div>
+      </div>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="pfill" style="width:0%"></div></div>
+    <div class="q-text" id="qtxt"></div>
+    <div class="opts" id="opts"></div>
+    <div class="ftost" id="ftost"></div>
+    <div class="tmo" id="tmo">
+      <span class="ti">⏰</span>
+      <p>Time's up! Moving to next question...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── RESULTS ─────────────────────────────────── -->
+<div class="screen" id="s-results">
+  <div class="card">
+    <p class="sec-title" style="text-align:center;margin-bottom:16px">Quiz Complete! 🎉</p>
+    <div class="res-ring-wrap">
+      <svg width="138" height="138" viewBox="0 0 138 138">
+        <circle class="rb" cx="69" cy="69" r="60"/>
+        <circle class="rf" cx="69" cy="69" r="60" id="rring"/>
+      </svg>
+      <div class="res-center">
+        <div class="res-pct" id="rpct">0%</div>
+        <div class="res-lbl">SCORE</div>
+      </div>
+    </div>
+    <div class="res-grade" id="rgrade"></div>
+    <div class="stat-row">
+      <div class="stat-box g"><div class="sv" id="rc">0</div><div class="sk">✅ Correct</div></div>
+      <div class="stat-box r"><div class="sv" id="rw">0</div><div class="sk">❌ Wrong</div></div>
+      <div class="stat-box b"><div class="sv" id="rtot">0</div><div class="sk">📝 Total</div></div>
+    </div>
+    <div class="rep-row">
+      <button class="btn-s" style="margin-top:0" onclick="goTo('s-menu')">🏠 Menu</button>
+      <button class="btn-p" style="margin-top:0" onclick="goTo('s-category')">🔁 Play Again</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='quiz.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="screen active">
+  <div class="card">
+    <div class="logo">
+      <span class="logo-icon">🎯</span>
+      <h1>Quiz Application</h1>
+      <p>// challenge your knowledge · beat the clock</p>
+    </div>
+    <a href="{{ url_for('register') }}" class="btn-p">Create Account</a>
+    <a href="{{ url_for('login') }}" class="btn-s">Sign In to Existing Account</a>
+    <p style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text3);margin-top:14px">
+      🔒 Your data is stored securely on our server
+    </p>
+  </div>
+</div>
+{% endblock %}
