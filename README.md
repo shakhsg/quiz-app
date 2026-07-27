@@ -1,5 +1,10 @@
 # Quiz Application
 
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.0%2B-000000?logo=flask)](https://flask.palletsprojects.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![CI](https://github.com/shakhsg/quiz-app/actions/workflows/ci.yml/badge.svg)](https://github.com/shakhsg/quiz-app/actions)
+
 An interactive, timed quiz game with a Flask backend and a modern dark-themed UI.
 
 ---
